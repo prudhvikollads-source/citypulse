@@ -9,13 +9,25 @@ let cities=[], snapshots=[], globeApi=null, cityApi=null, currentCity=null;
 // works served from repo root, web/, or a GitHub Pages subpath.
 const dataURL = p => new URL('../data/'+p, import.meta.url).href;
 
+async function loadCitySnapshot(c){
+  try{ const r=await fetch(dataURL(`live/${c.id}.json`));
+    if(r.ok) return await r.json();
+  }catch(_){/* fall through to sharded form */}
+  // Large cities are sharded: data/live/<city>/part-0.json, part-1.json, ...
+  // (see etl/fetch_feeds.py SHARD_BYTES). Merge parts in filename order.
+  const parts=[];
+  for(let i=0;i<32;i++){
+    try{ const r=await fetch(dataURL(`live/${c.id}/part-${i}.json`));
+      if(!r.ok) break; parts.push(await r.json());
+    }catch(_){ break; }
+  }
+  if(!parts.length) return null;
+  return {...parts[0], vehicles:parts.flatMap(p=>p.vehicles)};
+}
+
 async function load(){
   cities=(await (await fetch(dataURL('cities.json'))).json()).cities;
-  const results=await Promise.all(cities.map(async c=>{
-    try{ const r=await fetch(dataURL(`live/${c.id}.json`));
-      if(!r.ok) throw 0; return await r.json();
-    }catch(_){ return null; }
-  }));
+  const results=await Promise.all(cities.map(c=>loadCitySnapshot(c)));
   snapshots=results.filter(Boolean).map(s=>{
     const c=cities.find(c=>c.id===s.city);
     return {...s, name:c?c.name:s.city};
@@ -67,6 +79,7 @@ function dive(id){
 }
 function back(){
   currentCity=null; cityApi.clear();
+  document.getElementById('vehicle-card').classList.add('hidden');
   document.getElementById('city-view').classList.add('hidden');
   document.getElementById('globe-view').classList.remove('hidden');
 }
@@ -74,6 +87,7 @@ function back(){
 function onSelectVehicle(v){
   const card=document.getElementById('vehicle-card');
   card.innerHTML=vehicleCardHTML(v); card.classList.remove('hidden');
+  cityApi.track(v);  // lock on: dive to street level and chase it
 }
 
 async function boot(){
