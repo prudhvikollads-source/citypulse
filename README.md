@@ -4,7 +4,7 @@
 
 ### A mission control for your city's buses — then you realize the dots are real buses.
 
-Spin a 3D globe, dive into Boston or Denver, and watch **live vehicles** move: each dot is a real bus or train reporting its position right now. Click one for its route number, fleet number, and how full it is. Ask the copilot which routes are packed. Every number on screen comes from a real GTFS-realtime feed — verified by hand, refreshed every 5 minutes, zero API keys.
+Spin a 3D globe, dive into Boston, Denver, Atlanta, Toronto, or Helsinki, and watch **live vehicles** move: each dot is a real bus, tram, or train reporting its position right now. Click one for its route number, fleet number, and how full it is. Ask the copilot which routes are packed. Every number on screen comes from a real GTFS-realtime feed — verified by hand, refreshed every 5 minutes, zero API keys.
 
 > **Live demo:** GitHub Pages (enable on `web/`) · **Case study:** [`docs/index.html`](docs/index.html)
 
@@ -23,7 +23,7 @@ Transit data is public but invisible. Agencies publish GTFS-realtime feeds — l
 - **📊 KPI strip:** vehicles live, routes active, avg crowding, packed count — with honest "updated Xm ago" timestamps and LIVE/SNAPSHOT badges.
 - **🔑 Keys are upgrades:** the copilot's analyst runs fully keyless on live data. Paste an OpenAI-compatible key in-app (localStorage only) to unlock open-ended conversation.
 
-Measured 2026-10-09: **~1,290 vehicles** across Boston (~690) and Denver (~610), **285 routes**, refreshed every 5 min by GitHub Actions.
+Measured 2026-10-09: **~4,350 vehicles** across Boston (~620), Denver (~640), Atlanta (~180), Toronto (~1,790), and Helsinki (~1,130); **776 routes**; refreshed every 5 min by GitHub Actions.
 
 ---
 
@@ -42,8 +42,8 @@ Or manually: `python3 -m http.server 8000` from the repo root, then open `http:/
 
 ## 🕐 The First Five Minutes
 
-1. **Spin the globe.** Boston and Denver pulse — the number is the live fleet.
-2. **Dive into Boston.** Click the marker (or the chip). ~690 dots bloom over the dark map.
+1. **Spin the globe.** Five cities pulse across North America and Europe — the number is the live fleet.
+2. **Dive into Toronto.** Click the marker (or the chip). ~1,790 dots bloom over the dark map.
 3. **Click a red dot.** That's a packed bus — see its route, fleet number, and fill meter.
 4. **Ask the copilot:** *"Which routes are most crowded?"* — real table, real numbers.
 5. **Hit "rush-hour brief"** — a PM-style markdown brief downloads.
@@ -82,6 +82,13 @@ Static 3D site (web/) ──► GitHub Pages
 5. **Honest unknown states.** *Why:* feeds omit fields (speed, delays, rail occupancy). "—" and "Unknown" beat invented data; the copilot explains *why* a number is missing.
 6. **These two feeds.** *Why:* verified by actually parsing them — open, keyless, occupancy populated. Feeds needing keys or with unresolvable route IDs were cut (see DATA_SOURCES.md).
 
+## Maps to your profiles
+
+- **Data Engineer:** protobuf→JSON ETL on a 5-minute GitHub Actions schedule; compact wire format with nulls omitted; route names joined from GTFS static; same-origin JSON serving — no CORS, no keys.
+- **Data Scientist:** live crowding analytics — vehicles live, routes active, crowding distribution, packed counts; honest unknown states ("—", never guesses) and snapshot-freshness badges.
+- **AI Engineer:** deterministic analytical copilot computed from live snapshots — no hallucination possible; optional LLM upgrade path with a user-pasted key in localStorage only.
+- **Product Manager:** rush-hour brief generator — KPIs, hotspots, takeaways as a downloadable markdown brief; "keys are upgrades" product decision; problem framed as public-but-invisible transit data.
+
 ## 📁 Project Structure
 
 ```
@@ -106,9 +113,8 @@ Static 3D site (web/) ──► GitHub Pages
 
 ## 🚀 What I'd Do Differently at Scale
 
-- **More cities** via the feed registry (Seattle's KCM feed is realtime-verified; needs GTFS static for route names).
+- **More cities** via the feed registry: add a verified GTFS-RT URL to `data/feeds.json`, a GTFS-static route lookup via `etl/build_routes.py`, and a `data/cities.json` entry — the ETL, tests, and site pick it up with no code changes. (Snapshots over ~100KB are auto-sharded into `data/live/<city>/part-N.json`.)
 - **TripUpdates** for true delay-vs-schedule where agencies publish it.
-- **Tile the snapshots**: per-city JSON is fine at ~1.3k vehicles; at 50k, switch to vector tiles or protobuf-over-HTTP.
 - **Dedup & history**: store snapshots in object storage, add a 24h crowding replay.
 
 ## 📋 Data
