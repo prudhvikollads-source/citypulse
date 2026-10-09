@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CityPulse — Case Study</title>
+<style>
+:root{--bg:#070b12;--panel:#0d1420;--line:#1c2740;--txt:#dbe4f3;--dim:#8b98b3;--cy:#22d3ee}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font:16px/1.7 system-ui,sans-serif;max-width:860px;margin:0 auto;padding:48px 24px}
+a{color:var(--cy)}h1{font-size:34px;letter-spacing:1px;margin-bottom:6px}
+.sub{color:var(--dim);margin-bottom:32px}.sec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px;margin-bottom:22px}
+h2{font-size:19px;margin-bottom:12px;color:var(--cy);letter-spacing:1px}
+.metric{display:inline-block;background:#0a1220;border:1px solid var(--line);border-radius:10px;padding:10px 18px;margin:6px 8px 6px 0;text-align:center}
+.metric b{display:block;font:700 22px ui-monospace,monospace;color:var(--cy)}
+.metric span{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+code{background:#0a1220;padding:2px 7px;border-radius:5px;font-size:14px}
+pre{background:#0a1220;border:1px solid var(--line);border-radius:10px;padding:16px;overflow-x:auto;font-size:13px;margin:12px 0}
+ul{margin-left:20px}li{margin-bottom:6px}
+.cta{display:inline-block;margin-top:18px;background:var(--cy);color:#04222a;font-weight:700;padding:12px 26px;border-radius:10px;text-decoration:none}
+</style></head><body>
+<h1>🚌 CityPulse</h1>
+<p class="sub">Live transit mission control — a 3D globe of real buses, an AI copilot, and a PM brief generator. AI Engineer + Product Management portfolio project.</p>
+
+<div class="sec"><h2>PROBLEM</h2>
+<p>Transit agencies publish GTFS-realtime feeds — live vehicle positions, occupancy, delays — but the data stays invisible inside developer APIs. Riders guess at crowding; planners work from static schedules. The live network deserves a live interface.</p></div>
+
+<div class="sec"><h2>SOLUTION</h2>
+<p>CityPulse is a static 3D web app with a beating heart: a GitHub Action ETL that parses GTFS-realtime protobuf every 5 minutes into compact JSON. The frontend — Three.js globe, MapLibre city view, deterministic AI copilot — renders ~1,300 real vehicles with zero API keys and zero backend.</p>
+<div><span class="metric"><b>~1,290</b><span>live vehicles</span></span><span class="metric"><b>285</b><span>routes</span></span><span class="metric"><b>5 min</b><span>refresh</span></span><span class="metric"><b>0</b><span>API keys</span></span></div></div>
+
+<div class="sec"><h2>ARCHITECTURE</h2>
+<pre>GTFS-RT (MBTA, RTD) ──5min──▶ Action ETL ──▶ data/live/*.json ──▶ static 3D site
+   protobuf                 parse+join routes   same-origin JSON    globe / map / copilot</pre>
+<ul><li><b>Why Action-ETL, not browser fetch:</b> GTFS-RT endpoints lack CORS headers; protobuf parsing belongs server-side.</li>
+<li><b>Why static-first:</b> free GitHub Pages hosting, no backend to operate — "live" via 5-minute snapshots with honest timestamps.</li>
+<li><b>Why deterministic copilot:</b> answers are computed from the actual snapshot — reproducible, keyless, no hallucinated numbers. The LLM is an optional upgrade.</li></ul></div>
+
+<div class="sec"><h2>KEY DECISIONS</h2>
+<ul><li><b>Feeds were verified by parsing, not by docs.</b> Six candidates probed; only MBTA + RTD made the cut (open, keyless, occupancy populated). Seattle's feed was realtime-verified but cut for unresolvable route IDs — documented, not faked.</li>
+<li><b>Honest unknowns.</b> Feeds omit speed/delays/rail occupancy → the UI shows "—" and the copilot explains why, instead of inventing data.</li>
+<li><b>Prebuilt route lookups.</b> 24 MB GTFS zips baked into 63 KB JSON once; the hot ETL stays dependency-light and fast.</li></ul></div>
+
+<div class="sec"><h2>IMPACT</h2>
+<p>Demonstrates the full AI-engineer loop — real-time data ingestion, protobuf ETL, agentic tool use over live data — plus product-management craft: KPI design, honest data states, a one-click network brief. The demo <em>is</em> the portfolio piece: spin the globe and the data moves.</p>
+<a class="cta" href="https://github.com/prudhvikollads-source/citypulse">View on GitHub →</a></div>
+</body></html>
