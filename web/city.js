@@ -20,6 +20,7 @@ export const occupancyLabel = occ =>
 
 export function createCityView(onSelect) {
   let map = null, markers = new Map(), current = null;
+  let trackedId = null, trailPts = [];
 
   function ensure(city) {
     if (map) { map.jumpTo({center:[city.lon, city.lat], zoom:city.zoom}); return; }
@@ -41,6 +42,56 @@ export function createCityView(onSelect) {
         useRasterFallback(city);
       }
     });
+    // Grabbing the map hands control back to the user.
+    map.on('dragstart', ()=>{ if(trackedId) untrack(); });
+  }
+
+  // Fading trail behind the tracked vehicle (re-added if a style swap wipes it).
+  function ensureTrail(){
+    if(!map.getSource('trail-src')){
+      map.addSource('trail-src',{type:'geojson',
+        data:{type:'Feature',geometry:{type:'LineString',coordinates:[]}}});
+      map.addLayer({id:'trail-line',type:'line',source:'trail-src',
+        paint:{'line-color':'#22d3ee','line-width':3,'line-opacity':0.75}});
+    }
+  }
+  function pushTrail(lon,lat){
+    const last=trailPts[trailPts.length-1];
+    if(!last || Math.hypot(lon-last[0],lat-last[1])>0.0004){
+      trailPts.push([lon,lat]);
+      if(trailPts.length>40) trailPts.shift();
+      ensureTrail();
+      map.getSource('trail-src').setData({type:'Feature',
+        geometry:{type:'LineString',coordinates:trailPts}});
+    }
+  }
+
+  // Lock onto a vehicle: dive to street level, pitch into a 3D chase view,
+  // and follow it as positions refresh.
+  function track(v){
+    trackedId=v.id; trailPts=[[v.lon,v.lat]];
+    document.getElementById('track-hud').classList.remove('hidden');
+    updateHUD(v);
+    map.easeTo({center:[v.lon,v.lat], zoom:16.2, pitch:60, duration:1600});
+  }
+  function untrack(){
+    trackedId=null; trailPts=[];
+    document.getElementById('track-hud').classList.add('hidden');
+    try{ if(map.getLayer('trail-line')) map.removeLayer('trail-line');
+         if(map.getSource('trail-src')) map.removeSource('trail-src'); }catch(_){}
+    if(current) map.easeTo({pitch:0, zoom:current.zoom, duration:1200});
+  }
+  function updateHUD(v){
+    const hud=document.getElementById('track-hud');
+    const spd=v.speed!=null?Math.round(v.speed)+' mph':'—';
+    const brg=v.bearing!=null?String(Math.round(v.bearing)).padStart(3,'0')+'°':'—';
+    hud.innerHTML=
+      '<span class="rec"></span><b>TRACKING</b>'+
+      `<span class="t-route">🚌 ${esc(v.route_label||'?')} · #${esc(v.id)}</span>`+
+      `<span class="t-tele">${spd} · ${brg} · ${esc(occupancyLabel(v.occupancy))}</span>`+
+      `<span class="t-pos">${v.lat.toFixed(4)}, ${v.lon.toFixed(4)}</span>`+
+      '<button id="untrack" title="release camera">✕</button>';
+    document.getElementById('untrack').onclick=e=>{e.stopPropagation();untrack();};
   }
 
   function useRasterFallback(city){
@@ -56,6 +107,7 @@ export function createCityView(onSelect) {
 
   function setVehicles(city, vehicles) {
     ensure(city);
+    current = city;
     const seen = new Set();
     for (const v of vehicles) {
       seen.add(v.id);
@@ -74,11 +126,21 @@ export function createCityView(onSelect) {
       m._veh = v;
     }
     for (const [id,m] of markers) if(!seen.has(id)){ m.remove(); markers.delete(id); }
+    // Chase-cam: keep the camera glued to the tracked vehicle.
+    if(trackedId){
+      const t=markers.get(trackedId);
+      if(t && seen.has(trackedId)){
+        const v=t._veh;
+        pushTrail(v.lon,v.lat);
+        updateHUD(v);
+        map.easeTo({center:[v.lon,v.lat], duration:900});
+      } else untrack();  // vehicle left the feed — release the camera
+    }
   }
 
-  function clear(){ for(const [,m] of markers) m.remove(); markers.clear(); }
+  function clear(){ untrack(); for(const [,m] of markers) m.remove(); markers.clear(); }
 
-  return { setVehicles, clear,
+  return { setVehicles, clear, track, untrack,
     flyTo(city){ if(map) map.flyTo({center:[city.lon,city.lat], zoom:city.zoom, duration:1800}); } };
 }
 
