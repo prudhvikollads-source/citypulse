@@ -29,22 +29,28 @@ export function createCityView(onSelect) {
       center:[city.lon, city.lat], zoom:city.zoom,
       attributionControl:{compact:true},
     });
-    // If the vector style fails, fall back to Carto raster.
+    // If the vector style itself fails to load, fall back once to OSM raster
+    // (darkened via CSS to match the theme). Carto now requires an API key,
+    // so it is not used. Guarded: tile errors after a good load never trigger it.
+    let fellBack = false;
     map.on('error', e => {
-      if (e && e.error && /style/i.test(e.error.message||'')) useRasterFallback(city);
-    });
-    map.on('click', e => {
-      const feats = map.queryRenderedFeatures(e.point, {layers:['3d-buildings']});
-      void feats;
+      if (fellBack) return;
+      const msg = (e && e.error && e.error.message) || '';
+      if (/style|sprite|glyph/i.test(msg) && !map.isStyleLoaded()) {
+        fellBack = true;
+        useRasterFallback(city);
+      }
     });
   }
 
   function useRasterFallback(city){
     try {
-      map.setStyle({version:8, sources:{carto:{type:'raster',
-        tiles:['https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
-        tileSize:256, attribution:'© OpenStreetMap © CARTO'}},
-        layers:[{id:'carto',type:'raster',source:'carto'}]});
+      // Darken the light OSM tiles with CSS; vehicle markers are HTML and unaffected.
+      document.getElementById('map').classList.add('raster-dark');
+      map.setStyle({version:8, sources:{osm:{type:'raster',
+        tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize:256, attribution:'© OpenStreetMap contributors'}},
+        layers:[{id:'osm',type:'raster',source:'osm'}]});
     } catch(_){/* keep whatever rendered */}
   }
 
