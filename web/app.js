@@ -16,7 +16,10 @@ async function load(){
       if(!r.ok) throw 0; return await r.json();
     }catch(_){ return null; }
   }));
-  snapshots=results.filter(Boolean);
+  snapshots=results.filter(Boolean).map(s=>{
+    const c=cities.find(c=>c.id===s.city);
+    return {...s, name:c?c.name:s.city};
+  });
 }
 
 function ago(ts){
@@ -59,7 +62,7 @@ function dive(id){
   document.getElementById('city-view').classList.remove('hidden');
   const snap=snapshots.find(s=>s.city===id);
   if(snap) cityApi.setVehicles({...currentCity, agency:snap.agency},
-    snap.vehicles.map(v=>({...v, agency:snap.agency})));
+    snap.vehicles.map(v=>({...v, agency:snap.agency, _city:currentCity.name})));
   cityApi.flyTo(currentCity);
 }
 function back(){
@@ -88,7 +91,7 @@ async function boot(){
     if(currentCity){
       const snap=snapshots.find(s=>s.city===currentCity.id);
       if(snap) cityApi.setVehicles({...currentCity, agency:snap.agency},
-        snap.vehicles.map(v=>({...v, agency:snap.agency})));
+        snap.vehicles.map(v=>({...v, agency:snap.agency, _city:currentCity.name})));
     }
     void before;
   }, REFRESH_MS);
