@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CityPulse — Live Transit Mission Control</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}
+</script>
+</head>
+<body>
+<header id="topbar">
+  <div class="brand"><span class="pulse-dot"></span>CITYPULSE</div>
+  <div class="kpis" id="kpis">
+    <div class="kpi"><span class="kpi-val" id="kpi-vehicles">–</span><span class="kpi-lbl">vehicles live</span></div>
+    <div class="kpi"><span class="kpi-val" id="kpi-routes">–</span><span class="kpi-lbl">routes active</span></div>
+    <div class="kpi"><span class="kpi-val" id="kpi-crowd">–</span><span class="kpi-lbl">avg crowding</span></div>
+    <div class="kpi"><span class="kpi-val" id="kpi-full">–</span><span class="kpi-lbl">packed vehicles</span></div>
+  </div>
+  <div class="updated">updated <span id="updated-ago">–</span> · <span id="data-mode" class="mode-live">LIVE</span></div>
+</header>
+
+<main>
+  <section id="view-wrap">
+    <div id="globe-view"><canvas id="globe"></canvas>
+      <div id="city-chips"></div>
+      <div class="hint">drag to spin · click a city to dive in</div>
+    </div>
+    <div id="city-view" class="hidden">
+      <div id="map"></div>
+      <button id="back-globe">← globe</button>
+      <div id="vehicle-card" class="hidden"></div>
+      <div class="hint">click any vehicle for its live card</div>
+    </div>
+  </section>
+
+  <aside id="copilot">
+    <div class="copilot-head">TALK TO CITYPULSE <span id="agent-mode">analyst</span></div>
+    <div id="chat"></div>
+    <div class="quick">
+      <button data-q="How many vehicles are running right now?">vehicle count</button>
+      <button data-q="Which routes are most crowded?">crowded routes</button>
+      <button data-q="Generate a rush-hour brief">rush-hour brief</button>
+    </div>
+    <form id="chat-form"><input id="chat-input" placeholder="Ask about the network…" autocomplete="off"><button>→</button></form>
+    <details class="keybox"><summary>power up: LLM key (optional)</summary>
+      <input id="llm-key" type="password" placeholder="sk-… (stored only in this browser)">
+      <button id="llm-save">save</button>
+      <p>Without a key the copilot runs its built-in analyst — real answers from live data. A key unlocks open-ended conversation.</p>
+    </details>
+  </aside>
+</main>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
