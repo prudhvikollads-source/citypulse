@@ -34,6 +34,16 @@ main{flex:1;display:flex;min-height:0}
 .meter{height:8px;background:#1a2438;border-radius:4px;overflow:hidden;margin-top:4px}
 .meter i{display:block;height:100%;border-radius:4px}
 #vehicle-card .close{float:right;background:none;border:none;color:var(--dim);cursor:pointer;font-size:15px}
+/* Chase-cam HUD: live telemetry readout while tracking a vehicle. */
+#track-hud{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(8,14,24,.88);border:1px solid #22d3ee55;border-radius:12px;padding:8px 14px;z-index:6;font-size:12px;backdrop-filter:blur(4px)}
+#track-hud .rec{width:9px;height:9px;border-radius:50%;background:#f87171;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+#track-hud b{letter-spacing:2px;color:#22d3ee;font-size:11px}
+#track-hud .t-route{font-weight:700}
+#track-hud .t-tele{font-family:ui-monospace,monospace;color:var(--cy)}
+#track-hud .t-pos{font-family:ui-monospace,monospace;color:var(--dim)}
+#track-hud #untrack{background:none;border:1px solid var(--line);border-radius:8px;color:var(--dim);cursor:pointer;padding:2px 8px}
+#track-hud #untrack:hover{color:#fff;border-color:#f87171}
 #copilot{width:340px;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column}
 .copilot-head{padding:12px 14px;font-weight:700;letter-spacing:2px;font-size:12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
 #agent-mode{font-size:10px;background:#16202f;border:1px solid var(--line);padding:2px 8px;border-radius:10px;color:var(--cy);letter-spacing:1px}
